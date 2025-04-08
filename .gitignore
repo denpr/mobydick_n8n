@@ -1,0 +1,48 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches
+*.sqlite3
+db.sqlite3
+*.db
+*.sql
+
+# Logs and crash reports
+*.log
+*.pot
+*.po
+*.mo
+*.bak
+
+# Static files
+staticfiles/
+/src/static/
+
+# Media
+media/
+
+
+# Virtual environment
+venv/
+env/
+*.env
+
+# Development
+*.pyc
+*.bak
+*.swp
+*~
+.idea/
+
+# Ignore local settings
+local_settings.py
+
+# Ignore database migrations
+*/migrations/
+
+# Ignore the .vscode folder (if you're using Visual Studio Code)
+.vscode/
+
+.DS_Store
