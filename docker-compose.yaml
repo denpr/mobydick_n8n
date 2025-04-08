@@ -30,3 +30,16 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - ~/.n8n/postgres:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:3
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "8081:80"
+    volumes:
+      - ~/.n8n/pgadmin:/var/lib/pgadmin
+    depends_on:
+      - postgres
