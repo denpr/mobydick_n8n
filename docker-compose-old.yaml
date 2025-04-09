@@ -1,0 +1,81 @@
+version: '3'
+services:
+  n8n:
+    image: n8nio/n8n
+    restart: unless-stopped
+    ports:
+      - "5555:5678"
+    environment:
+      - N8N_HOST=dev.mobydick.by
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - N8N_SECURE_COOKIE=false
+      # - N8N_RUNNERS_ENABLED=true
+      - WEBHOOK_URL=https://dev.mobydick.by/
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_POSTGRESDB_PORT=5432
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:13
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - ../db/postgres:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:3
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "8081:80"
+    volumes:
+      - ../db/pgadmin:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: unless-stopped
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    volumes:
+      - ../persistentdata/static:/var/www/staticfiles
+      - ../persistentdata/media:/var/www/media
+      - ../persistentdata/certbot/conf:/etc/letsencrypt
+      - ../persistentdata/certbot/www:/var/www/certbot
+      - ../persistentdata/html:/var/www/html
+    depends_on:
+      - n8n
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    restart: unless-stopped
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    volumes:
+      - ../persistentdata/certbot/conf:/etc/letsencrypt
+      - ../persistentdata/certbot/www:/var/www/certbot
+    depends_on:
+      - nginx
+
+networks:
+  default:
+    external:
+      name: nginx_network
